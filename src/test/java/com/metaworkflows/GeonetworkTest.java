@@ -22,20 +22,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package it.geosolutions.geonetwork;
+package com.metaworkflows;
 
+import it.geosolutions.geonetwork.GNClient;
 import it.geosolutions.geonetwork.exception.GNLibException;
 import it.geosolutions.geonetwork.exception.GNServerException;
 import it.geosolutions.geonetwork.util.GNSearchRequest;
 import it.geosolutions.geonetwork.util.GNSearchResponse;
 import it.geosolutions.geonetwork.util.GNInsertConfiguration;
+
 import org.apache.log4j.Logger;
+
 import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.logging.Level;
+
 import static org.junit.Assert.*;
 import static org.junit.Assume.*;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
