@@ -60,7 +60,7 @@ public class GeonetworkSearchTest extends GeonetworkTest {
         removeAllMetadata();
 
         GNClient client = createClientAndCheckConnection();
-        insertSome();
+        //insertSome();
 
         {
             GNSearchRequest searchRequest = new GNSearchRequest();
