@@ -71,27 +71,32 @@ public class MetaWorkflowsTest extends GeonetworkTest {
     }
 
     @Test
-    public void testRegisterResult() throws Exception {
-    	  	 
-    	removeAllMetadata();    	
+    public void testRegisterResult() throws Exception {    	
+    	
+    	//Uncomment to clean out the cat
+    	//removeAllMetadata();    	
+    	
     	MetaWorkflow metaWorkflow = new MetaWorkflow();
-
     	    	 
     	System.out.println("Register Result Test");
     	String newTitleElement = "Shape_ee802b63-070d-43c0-9558-983bca748d31443813113178467117";
     	String newUrlElement = "http://localhost:8000/geoserver/N52/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=N52:Shape_ee802b63-070d-43c0-9558-983bca748d31443813113178467117";
-    	long insertedId = metaWorkflow.RegisterResult(newTitleElement,newUrlElement);
+    	String insertedId = metaWorkflow.RegisterResult(newTitleElement,newUrlElement);
             	
         //query for that newly inserted element 
         Element retrievedElement = metaWorkflow.GetMetadata(insertedId);
-
         
         //get the location of the retrieved element
         Element Urllocation = metaWorkflow.getLocationElement(retrievedElement);  
         System.out.println("GeoNetwork: getLocationElement " + Urllocation.getText()); 
         //chstr.setText("updated title from JBPM");
-               
-
+              
+        //get the location of the retrieved element
+        Element serviceElement = metaWorkflow.GetMetadata("19903");  
+        Element serviceElement2 = metaWorkflow.getMatchingProcessElement(serviceElement,"pillar2");  
+        //System.out.println("GeoNetwork: getLocationElement " + Urllocation.getText());
+        
+        
     }
  
     

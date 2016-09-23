@@ -1,5 +1,13 @@
 package com.metaworkflows;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -21,6 +29,9 @@ import org.jdom.Namespace;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import it.geosolutions.geonetwork.GNClient;
 import it.geosolutions.geonetwork.util.GNInsertConfiguration;
@@ -73,11 +84,11 @@ public class MetaWorkflow {
 	 * @return 
 	 * @result result: metadata Element
 	 */
-    public Element GetMetadata(Long metadataElemId) throws Exception {
+    public Element GetMetadata(String metadataElemId) throws Exception {
     	System.out.println("GeoNetwork: start retrieving metadata");
 
         GNClient client = createClientAndCheckConnection();
-        Element metadataElement  = client.get(metadataElemId);
+        Element metadataElement  = client.get(Long.parseLong(metadataElemId));
                         
         //pretty string printing of xml        
         XMLOutputter outp = new XMLOutputter();
@@ -102,7 +113,7 @@ public class MetaWorkflow {
  	 * @return 
  	 * @result result: metadataId Long
  	 */
-     public long RegisterResult(String newTitleElementString,String newDataUrlString) throws Exception {
+     public String RegisterResult(String newTitleElementString,String newDataUrlString) throws Exception {
      	System.out.println("GeoNetwork: start inserting metadata");
      	
          GNInsertConfiguration cfg = createDefaultInsertConfiguration();
@@ -153,7 +164,7 @@ public class MetaWorkflow {
          
          System.out.println("GeoNetwork: inserted metadata. Id: " + metaDataId );
          
-         return metaDataId;
+         return Long.toString(metaDataId);
      }
      
      
@@ -221,7 +232,67 @@ public class MetaWorkflow {
      
        
         
+  	/**
+  	 *Takes an XML Element object (i.e. ISO 19115/191389 definition) and returns the matching service 
+  	 * @param metadata: a metadata record
+  	 * @param serviceId: processing service ID
+  	 * @throws ParserConfigurationException 
+  	 * @throws IOException 
+  	 * @throws SAXException 
+  	 * @throws XPathExpressionException 
+  	 * @result result: metadata Element
+  	 */
+      //Function from GN lib
+      public Element getMatchingProcessElement(Element metadata, String processId) throws SAXException, IOException, ParserConfigurationException, XPathExpressionException {
+          //    xmlns:gmd="http://www.isotc211.org/2005/gmd"
+          //    xmlns:gco="http://www.isotc211.org/2005/gco"        
+          //            
+          //    <gmd:identificationInfo>
+          //      <gmd:MD_DataIdentification>
+          //         <gmd:citation>
+          //            <gmd:CI_Citation>
+          //               <gmd:title>
+          //                  <gco:CharacterString>TEST GeoBatch Action: GeoNetwork</gco:CharacterString>
+          final Namespace NS_GMD = Namespace.getNamespace("gmd","http://www.isotc211.org/2005/gmd");
+          final Namespace NS_GCO = Namespace.getNamespace("gco","http://www.isotc211.org/2005/gco");
+          final Namespace NS_SRV = Namespace.getNamespace("gco","http://www.isotc211.org/2005/srv");
+          
+          Element idInfo = metadata.getChild("identificationInfo", NS_GMD);    
+          Element srvIdInfo = idInfo.getChild("SV_ServiceIdentification",NS_SRV);    
+          
+          //pretty string printing of xml        
+          XMLOutputter outp = new XMLOutputter();
+          String metadataXmlString = outp.outputString(srvIdInfo);        
+          System.out.println(metadataXmlString);
+                    
+          File file = loadFile("C:\\geonetwork_metadata\\metadata_workflow_single_service.xml");       
+          
+          DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+          org.w3c.dom.Document doc = factory.newDocumentBuilder().parse(file);
+
+          
+          //Start an xpath query to find the matching process and some metadata 
+          XPathFactory xFactory = XPathFactory.newInstance();
+          XPath xPath = xFactory.newXPath();
+           //XPathExpression exp = xPath.compile("/MD_Metadata/fileidentificationInfo[1]");
+          XPathExpression exp = xPath.compile("/MD_Metadata/identificationInfo/SV_ServiceIdentification/containsOperations[1]");
+          
+         
+          NodeList nl = (NodeList)exp.evaluate(doc.getFirstChild(), XPathConstants.NODESET);
+          for (int index = 0; index < nl.getLength(); index++) {
+              Node node = nl.item(index);
+              System.out.println(node.getTextContent());
+          }
+          
+  
+          //NodeList nl = (NodeList)exp.evaluate(doc.getFirstChild(), XPathConstants.NODESET);
+          
+
+          return null;
+      }
       
+        
+         
       
      
  	/**
