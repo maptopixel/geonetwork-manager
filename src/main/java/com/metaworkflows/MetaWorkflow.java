@@ -15,10 +15,17 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.ByteBuffer;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
@@ -26,12 +33,14 @@ import org.apache.log4j.Logger;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.Namespace;
+import org.jdom.filter.ElementFilter;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
 
 import it.geosolutions.geonetwork.GNClient;
 import it.geosolutions.geonetwork.util.GNInsertConfiguration;
@@ -44,6 +53,8 @@ public class MetaWorkflow {
 	protected static final String gnServiceURL = "http://localhost:8005/geonetwork";
     protected static final String gnUsername = "admin";
     protected static final String gnPassword = "admin";
+    
+    protected static final String gnGetEndPoint = "/srv/eng/xml.metadata.get";
     
     public GNClient client;
     
@@ -78,7 +89,7 @@ public class MetaWorkflow {
     
     
 	/**
-	 * takes a metadata element id for a catalogue:
+	 * takes a metadata element catalogue URL and ID pointing to a metadata record:
 	 * this is designed to get metadata from the configured geonetwork instance
 	 * @param metadataElemId: unique id referencing the metadata record
 	 * @return 
@@ -86,19 +97,22 @@ public class MetaWorkflow {
 	 */
     public Element GetMetadata(String metadataElemId) throws Exception {
     	System.out.println("GeoNetwork: start retrieving metadata");
-
+        	
+    	System.out.println("GeoNetwork: metadataElemId " + metadataElemId );
+    	//Check the input string
+    	 String[] temp = metadataElemId.split("=");
+    	 metadataElemId = temp[temp.length-1];
+    	
         GNClient client = createClientAndCheckConnection();
         Element metadataElement  = client.get(Long.parseLong(metadataElemId));
                         
         //pretty string printing of xml        
         XMLOutputter outp = new XMLOutputter();
         String metadataXmlString = outp.outputString(metadataElement);        
-        //System.out.println(metadataXmlString);
-              
-        
+        //System.out.println(metadataXmlString);          
         dumpTextToFile(metadataXmlString, metadataElemId + "_geonetwork response");
-        //MetadataInfo metaDataInfo = client.getInfo(metadataElemId, false); // 
 
+        
     	System.out.println("GeoNetwork: retrieved metadata. Id: " + metadataElement );
 		return metadataElement;
     }
@@ -114,7 +128,13 @@ public class MetaWorkflow {
  	 * @result result: metadataId Long
  	 */
      public String RegisterResult(String newTitleElementString,String newDataUrlString) throws Exception {
-     	System.out.println("GeoNetwork: start inserting metadata");
+     	System.out.println("GeoNetwork: start registering / inserting metadata");
+     	
+     	/*    	      	 
+     	Date date = new Date();
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss") ;
+		newTitleElementString = newTitleElementString + "_" + dateFormat.format(date);	
+     	*/
      	
          GNInsertConfiguration cfg = createDefaultInsertConfiguration();
          GNPrivConfiguration pcfg = new GNPrivConfiguration();
@@ -124,8 +144,9 @@ public class MetaWorkflow {
          pcfg.addPrivileges(GNPrivConfiguration.GROUP_ALL,      EnumSet.of(GNPriv.VIEW, GNPriv.DYNAMIC, GNPriv.FEATURED));
          pcfg.addPrivileges(2, EnumSet.allOf(GNPriv.class));
          
+    
          //Take a template ISO metadata document. Should set as a resource...
-         File file = loadFile("C:\\geonetwork_metadata\\metadata_workflow_single_download.xml");        
+         File file = loadFile("C:\\geonetwork_metadata\\metadata_workflow_single_download.xml");
          assertNotNull(file); 
          
          Element elementToInsert = parseFile(file);
@@ -135,36 +156,49 @@ public class MetaWorkflow {
          XMLOutputter outp = new XMLOutputter();
          String idInfoMetadataXmlString = outp.outputString(idInfo);        
          System.out.println(idInfoMetadataXmlString );
-         */
-                 
+         */                
          
          Element chstr2 = getTitleElement(elementToInsert);  
          System.out.println("GeoNetwork: getTitleElement " + chstr2.getText()); 
          chstr2.setText(newTitleElementString);
-         
-         
-         
+         System.out.println("GeoNetwork: revised getTitleElement " + chstr2.getText());          
+                  
          Element locationElement = getLocationElement(elementToInsert);  
          System.out.println("GeoNetwork: getLocationElement " + locationElement.getText()); 
-         locationElement.setText(newDataUrlString);
-         
+         locationElement.setText(newDataUrlString);                  
+         System.out.println("GeoNetwork: revised getLocationElement " + locationElement.getText()); 
+                  
+         /*
+         Element dateElement = getDateElement(elementToInsert);  
+         System.out.println("GeoNetwork: getDateElement " + dateElement.getText()); 
+         //dateElement.setText(newDataUrlString);         
+         //System.out.println("GeoNetwork: revised getLocationElement " + locationElement.getText()); 
+           */
+                  
          //Create the XML file for inserting
          File tempFile = File.createTempFile("jbpm_data_update", ".xml");
          FileUtils.forceDeleteOnExit(tempFile);
+         //File tempFile = new File("C:\\geonetwork_metadata\\temp_files\\jbpm_data_update.xml");
+                
          XMLOutputter fileOutputter = new XMLOutputter(Format.getCompactFormat());
          FileUtils.writeStringToFile(tempFile, fileOutputter.outputString(elementToInsert));
-                         
+         
+         System.out.println("GeoNetwork: temp metadataXmlPath" + tempFile.getAbsolutePath());       
+         
          XMLOutputter outp = new XMLOutputter();
          String metadataXmlString = outp.outputString(elementToInsert);        
-         System.out.println(metadataXmlString);
+         //System.out.println("GeoNetwork: metadataXmlString " + metadataXmlString);
                   
          //Do insertion of the file
          GNClient client = createClientAndCheckConnection();  
          long metaDataId = client.insertMetadata(cfg, tempFile);
          
-         System.out.println("GeoNetwork: inserted metadata. Id: " + metaDataId );
+
+         System.out.println("GeoNetwork: inserted metadata. Id: " + metaDataId);
          
-         return Long.toString(metaDataId);
+         String metadataUrl = gnServiceURL + gnGetEndPoint  + "?id=" + metaDataId;
+         System.out.println("GeoNetwork: inserted metadata. Url: " + metadataUrl );
+         return metadataUrl;
      }
      
      
@@ -199,6 +233,29 @@ public class MetaWorkflow {
      }
      
      
+     
+     public static void listChildren(Element current, int depth) {
+    	   
+    	    printSpaces(depth);
+    	    System.out.println(current.getName() + " = "  + current.getText());
+    	    List children = current.getChildren();
+    	    Iterator iterator = children.iterator();
+    	    while (iterator.hasNext()) {
+    	      Element child = (Element) iterator.next();
+    	      listChildren(child, depth+1);
+    	    }
+    	    
+    	  }
+     
+     private static void printSpaces(int n) {
+    	    
+    	    for (int i = 0; i < n; i++) {
+    	      System.out.print(' '); 
+    	    }
+    	    
+    	  }
+     
+     
  	/**
  	 *Takes an XML Element object (i.e. ISO 19115/191389 definition) and returns the URL of the object 
  	 * @param metadata: a metadata record
@@ -222,16 +279,103 @@ public class MetaWorkflow {
          Element dataId = idInfo.getChild("MD_Distribution", NS_GMD);
          Element cit    = dataId.getChild("transferOptions", NS_GMD);
          Element cicit  = cit.getChild("MD_DigitalTransferOptions", NS_GMD);
-         Element title  = cicit.getChild("onLine", NS_GMD);
-         Element location  = title.getChild("CI_OnlineResource", NS_GMD);
-         Element linkage  = location.getChild("linkage", NS_GMD);
-         Element urllocation  = linkage.getChild("URL", NS_GMD);
+         /*         
+         System.out.println("GeoNetwork: cicit: " + cicit.getDescendants());
+
+         Iterator<?> processDescendants =cicit.getDescendants(new ElementFilter()); 
+         while(processDescendants.hasNext()) {
+        	   Element e =  (Element) processDescendants.next();
+        	   String currentName = e.getText();
+        	   System.out.println("GeoNetwork: cicit: " + currentName);
+        	}         
+         */
+         System.out.println("GeoNetwork: num of onlineResources: " + cicit.getChildren().size());
+
+         List children = cicit.getChildren();
+         Element urllocation;
+         Element onLine;
+         if (cicit.getChildren().size() > 1) {
+        	 System.out.println("GeoNetwork: multiple onlineresource options");
+        	 onLine = (Element) children.get(2); //Which to pick?
+    
+        
+         } else {        	
+        	 System.out.println("GeoNetwork: single onlineresource option");
+        	 onLine = (Element) children.get(0); 
+         }
+         Element location  = onLine.getChild("CI_OnlineResource", NS_GMD);
+         Element linkage  = location.getChild("linkage", NS_GMD);         
+         urllocation  = linkage.getChild("URL", NS_GMD);         
+         System.out.println("GeoNetwork: urllocation: " + urllocation.getText());     
          
+         /*
+         Iterator iterator = children.iterator();
+         while (iterator.hasNext()) {
+           Element child = (Element) iterator.next();
+           //System.out.println("GeoNetwork: child: " + child.toString());
+           //Element title  = child.getChild("onLine", NS_GMD);           
+           //Element location2  = child.getChild("CI_OnlineResource", NS_GMD);           
+          // Element linkage2  = child.getChild("linkage", NS_GMD);
+          // Element urllocation2  = linkage2.getChild("URL", NS_GMD);           
+          // System.out.println("GeoNetwork: child: " + urllocation2.getText());           
+         }
+          */
          return urllocation;
      }
+          
+  	/**
+  	 *Takes an XML Element object (i.e. ISO 19115/191389 definition) and returns the URL of the object 
+  	 * @param metadata: a metadata record
+  	 * @result result: metadata Element
+  	 */
+      //Function from GN lib
+      public String getMetaElementString(Element metadata) {
+          System.out.println("GeoNetwork: getMetaElementString: " + metadata.getText());
+		return metadata.getText();
+      }
      
-       
+ 	/**
+ 	 *Takes an XML Element object (i.e. ISO 19115/191389 definition) and returns the datestamp field
+ 	 * @param metadata: a metadata record
+ 	 * @result result: metadata Element
+ 	 */
+     //Function from GN lib
+     public Element getDateElement(Element metadata) {
+         //    xmlns:gmd="http://www.isotc211.org/2005/gmd"
+         //    xmlns:gco="http://www.isotc211.org/2005/gco"        
+         //            
+         final Namespace NS_GMD = Namespace.getNamespace("gmd","http://www.isotc211.org/2005/gmd");
+         final Namespace NS_GCO = Namespace.getNamespace("gco","http://www.isotc211.org/2005/gco");
+
+         Element dateInfo = metadata.getChild("dateStamp", NS_GMD);        
+         Element dateTime = dateInfo.getChild("DateTime", NS_GCO);
+         return dateTime;
+     }
+     
+     
         
+  	/**
+  	 *Takes an XML Element object (i.e. ISO 19115/191389 definition) and returns the bounding box
+  	 * @param metadata: a metadata record
+  	 * @result result: metadata Element
+  	 */
+      //Function from GN lib
+      public Element getBoundingBoxElement(Element metadata) {
+          //    xmlns:gmd="http://www.isotc211.org/2005/gmd"
+          //    xmlns:gco="http://www.isotc211.org/2005/gco"        
+          //            
+          final Namespace NS_GMD = Namespace.getNamespace("gmd","http://www.isotc211.org/2005/gmd");
+          final Namespace NS_GCO = Namespace.getNamespace("gco","http://www.isotc211.org/2005/gco");
+
+          Element extent = metadata.getChild("extent", NS_GMD);        
+          Element bbox = extent.getChild("EX_Extent", NS_GMD)
+        		  .getChild("geographicElement", NS_GMD)
+        		  .getChild("EX_GeographicBoundingBox", NS_GMD);
+          return bbox;
+      }
+      
+      
+     
   	/**
   	 *Takes an XML Element object (i.e. ISO 19115/191389 definition) and returns the matching service 
   	 * @param metadata: a metadata record
@@ -281,7 +425,7 @@ public class MetaWorkflow {
           NodeList nl = (NodeList)exp.evaluate(doc.getFirstChild(), XPathConstants.NODESET);
           for (int index = 0; index < nl.getLength(); index++) {
               Node node = nl.item(index);
-              System.out.println(node.getTextContent());
+              System.out.println("service node: " + node.getTextContent());
           }
           
   

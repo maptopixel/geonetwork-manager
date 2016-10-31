@@ -62,44 +62,40 @@ import org.junit.Ignore;
  *
  * @author Julian Rosser
  */
-public class MetaWorkflowsTest extends GeonetworkTest {
+public class MetaWorkflowsProcessTest extends GeonetworkTest {
     private final static Logger LOGGER = Logger.getLogger(MetaWorkflowsTest.class);
 
 	String tempDir= "C:\\tmp\\"; // windows
     
-    public MetaWorkflowsTest() {
+    public MetaWorkflowsProcessTest() {
     }
 
     @Test
-    public void testRegisterResult() throws Exception {    	
+    public void testRegisterProcess() throws Exception {    	
     	
     	//Uncomment to clean out the cat
     	//removeAllMetadata();    	
     	
     	MetaWorkflow metaWorkflow = new MetaWorkflow();
-    	
-    	    	 
-    	System.out.println("Register Result Test");
-    	String newTitleElement = "Sf Archsites Workflow registration";
-    	String newUrlElement = "http://localhost:8000/geoserver/sf/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=sf:archsites";
-    	String insertedId = metaWorkflow.RegisterResult(newTitleElement,newUrlElement);
-            	
+        
+    	System.out.println("Registering a process as 19157");
+    	String processTitleElement = "gs:BufferFeatureCollection";
+    	String serviceUrlElement = "http://localhost:8000/geoserver/ows";
+    	String insertedProcessId = metaWorkflow.RegisterResult(processTitleElement,serviceUrlElement );
+        
         //query for that newly inserted element
-    	System.out.println("query for that newly inserted element");
-        Element retrievedElement = metaWorkflow.GetMetadata(insertedId);
-                
+    	System.out.println("query for that newly inserted prcess element");
+        Element processElement = metaWorkflow.GetMetadata(insertedProcessId);
+    	        
+        //get the location of the retrieved process element
+        Element processLocation = metaWorkflow.getLocationElement(processElement);  
+        System.out.println("GeoNetwork: getLocationElement " + processLocation.getText()); 
+        
+        /* service stuff 
         //get the location of the retrieved element
-        Element Urllocation = metaWorkflow.getLocationElement(retrievedElement);  
-        System.out.println("GeoNetwork: getLocationElement " + Urllocation.getText()); 
-                    
-    	
-    	
-        /*
-        //get the location of the retrieved element
-        System.out.println("GeoNetwork: harvested element "); 
-        Element harvestedElement = metaWorkflow.GetMetadata("30078");
-        Element Urllocation2 = metaWorkflow.getLocationElement(harvestedElement );  
-        System.out.println("GeoNetwork: getLocationElement " + Urllocation2.getText()); 
+        Element serviceElement = metaWorkflow.GetMetadata("30091");  
+        Element serviceElement2 = metaWorkflow.getMatchingProcessElement(serviceElement,"pillar2");  
+        //System.out.println("GeoNetwork: getLocationElement " + Urllocation.getText());
         */
     	
 

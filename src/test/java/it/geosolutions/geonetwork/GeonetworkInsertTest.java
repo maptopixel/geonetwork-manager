@@ -58,7 +58,7 @@ public class GeonetworkInsertTest extends GeonetworkTest {
         pcfg.addPrivileges(GNPrivConfiguration.GROUP_ALL,      EnumSet.of(GNPriv.VIEW, GNPriv.DYNAMIC, GNPriv.FEATURED));
         pcfg.addPrivileges(2, EnumSet.allOf(GNPriv.class));
 
-        File file = loadFile("metadata.xml");
+        File file = loadFile("metadata_workflow_single_download.xml");
         assertNotNull(file);
 
         GNClient client = createClientAndCheckConnection();
