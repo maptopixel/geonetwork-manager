@@ -62,12 +62,12 @@ import org.junit.Ignore;
  *
  * @author Julian Rosser
  */
-public class MetaWorkflowsProcessTest extends GeonetworkTest {
+public class MetaWorkflowsGSCollectGeometriesProcessTest extends GeonetworkTest {
     private final static Logger LOGGER = Logger.getLogger(MetaWorkflowsTest.class);
 
 	String tempDir= "C:\\tmp\\"; // windows
     
-    public MetaWorkflowsProcessTest() {
+    public MetaWorkflowsGSCollectGeometriesProcessTest() {
     }
 
     @Test
@@ -79,9 +79,9 @@ public class MetaWorkflowsProcessTest extends GeonetworkTest {
     	MetaWorkflow metaWorkflow = new MetaWorkflow();
         
     	System.out.println("Registering a process as 19139");
-    	String processTitleElement = "gs:Heatmap";
-    	String serviceUrlElement = "http://localhost:8000/geoserver/ows";
-    	String insertedProcessId = metaWorkflow.RegisterResult(processTitleElement,serviceUrlElement );
+    	String processTitleElement = "gs:CollectGeometries";
+    	String serviceUrlElement = "http://geoprocessing.westus.cloudapp.azure.com:8082/geoserver/ows";
+    	String insertedProcessId = metaWorkflow.RegisterResult(processTitleElement,serviceUrlElement);
         
         //query for that newly inserted element
     	System.out.println("query for that newly inserted prcess element");

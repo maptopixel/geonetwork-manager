@@ -296,8 +296,8 @@ public class MetaWorkflow {
          Element onLine;
          if (cicit.getChildren().size() > 1) {
         	 System.out.println("GeoNetwork: multiple onlineresource options");
-        	 onLine = (Element) children.get(2); //Which to pick?
-    
+        	 //onLine = (Element) children.get(2); //Which to pick?
+        	 onLine = (Element) children.get(2); //should probably take the default of the WFS
         
          } else {        	
         	 System.out.println("GeoNetwork: single onlineresource option");
