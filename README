@@ -1,4 +1,9 @@
-geonetwork-manager is a java library to interact with GeoNetwork Opensource. 
+# Metaworkflows-geonetwork-manager
+
+This repo contains code for interacting with a GeoNetwork instance to insert and retrieve metadata for use in metadata-based geoprocessing workflows.
+
+The code is based on the geonetwork-manager java library to interact with GeoNetwork Opensource. 
+
 Its aim is to provide a simple API to create, delete, administer the catalog entries programmatically.
 
 == Status
